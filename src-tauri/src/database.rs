@@ -56,12 +56,18 @@ impl Database {
             "#,
         )?;
 
-        // Ensure default source exists
-        let default_source =
+        // Ensure default dual sources exist (SoliSpirit + mtproto-auto-proxies)
+        let default_source_1 =
             "https://raw.githubusercontent.com/SoliSpirit/mtproto/master/all_proxies.txt";
+        let default_source_2 =
+            "https://raw.githubusercontent.com/moshraheem-sudo/mtproto-auto-proxies/main/proxies.txt";
         conn.execute(
             "INSERT OR IGNORE INTO sources (url, enabled) VALUES (?1, 1)",
-            params![default_source],
+            params![default_source_1],
+        )?;
+        conn.execute(
+            "INSERT OR IGNORE INTO sources (url, enabled) VALUES (?1, 1)",
+            params![default_source_2],
         )?;
 
         Ok(())

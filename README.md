@@ -24,7 +24,13 @@ Designed by **Mohammed Shaheed Al-Aajeebi**, the application features an ultra-c
    - Includes a one-click manual update button to refresh proxies on demand.
    - Fully offline-capable: caches verified proxies in a local SQLite database with zero downtime.
 
-2. **In-App GitHub Release Updater (v1.0.1):**
+2. **Dual-Source Sync & Seamless Failover:**
+   - **Primary Source 1:** [SoliSpirit/mtproto](https://github.com/SoliSpirit/mtproto) raw feed.
+   - **Secondary Source 2:** [moshraheem-sudo/mtproto-auto-proxies](https://github.com/moshraheem-sudo/mtproto-auto-proxies) auto-scraped feed (updated every 2 hours).
+   - **Fault Tolerance:** Both sources are queried concurrently and independently. If one feed times out or is blocked, MTProxy Desk seamlessly continues with the other without crashing or displaying empty lists.
+   - **Strict Canonical Deduplication:** Merges proxies and deduplicates by unique `(server, port, secret)` tuple, unifying `tg://proxy` and `https://t.me/proxy` formats.
+
+3. **In-App GitHub Release Updater (v1.0.1):**
    - Real-time version check directly with GitHub Releases.
    - Only offers downloads when a newer version exists, preventing redundant downloads.
    - Live Megabytes progress indicator (`MB downloaded / MB total`).
@@ -79,4 +85,5 @@ Designed by **Mohammed Shaheed Al-Aajeebi**, the application features an ultra-c
 - **Developer:** Mohammed Shaheed Al-Aajeebi (محمد شهيد الاعاجيبي)
 - **Application Version:** 1.0.1
 - **GitHub Repository:** [moshraheem-sudo/MTProxy-Desk](https://github.com/moshraheem-sudo/MTProxy-Desk)
-- **Primary Proxy Source:** [SoliSpirit/mtproto](https://github.com/SoliSpirit/mtproto)
+- **Primary Proxy Source 1:** [SoliSpirit/mtproto](https://github.com/SoliSpirit/mtproto)
+- **Secondary Proxy Source 2:** [moshraheem-sudo/mtproto-auto-proxies](https://github.com/moshraheem-sudo/mtproto-auto-proxies)

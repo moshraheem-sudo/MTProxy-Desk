@@ -25,6 +25,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
 PRIMARY_SOURCE_URL = "https://raw.githubusercontent.com/SoliSpirit/mtproto/master/all_proxies.txt"
+SECONDARY_SOURCE_URL = "https://raw.githubusercontent.com/moshraheem-sudo/mtproto-auto-proxies/main/proxies.txt"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(APP_DIR, "mtproxy_desk.db")
 LOG_PATH = os.path.join(APP_DIR, "MTProxyDesk_Diagnostics.log")
@@ -506,27 +507,51 @@ class MTProxyDeskApp:
 
     def _fetch_from_github(self):
         def task():
-            log_event("INFO", "FETCHER", f"Fetching proxies from GitHub: {PRIMARY_SOURCE_URL}")
+            log_event("INFO", "FETCHER", f"Initiating concurrent dual-source sync from GitHub feeds...")
             self.btn_fetch.config(state="disabled", text="جاري التحديث...")
-            try:
-                req = urllib.request.Request(
-                    PRIMARY_SOURCE_URL,
-                    headers={'User-Agent': 'MTProxyDesk/1.0.1 (Windows)'}
-                )
-                with urllib.request.urlopen(req, timeout=15) as response:
-                    raw_text = response.read().decode('utf-8', errors='ignore')
+            sources = [
+                ("Primary (SoliSpirit)", PRIMARY_SOURCE_URL),
+                ("Secondary (mtproto-auto-proxies)", SECONDARY_SOURCE_URL)
+            ]
+            all_fetched = []
+            errors = []
 
-                new_proxies = parse_proxies_text(raw_text, PRIMARY_SOURCE_URL)
-                if new_proxies:
-                    self.db.upsert_proxies(new_proxies)
-                    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    self.db.set_setting("last_update_timestamp", now_str)
-                    log_event("INFO", "FETCHER", f"Successfully loaded {len(new_proxies)} proxies.")
+            for name, url in sources:
+                try:
+                    log_event("INFO", "FETCHER", f"Fetching from {name}: {url}")
+                    req = urllib.request.Request(
+                        url,
+                        headers={'User-Agent': 'MTProxyDesk/1.0.1 (Windows)'}
+                    )
+                    with urllib.request.urlopen(req, timeout=12) as response:
+                        raw_text = response.read().decode('utf-8', errors='ignore')
+                    parsed = parse_proxies_text(raw_text, url)
+                    log_event("INFO", "FETCHER", f"Received {len(parsed)} proxies from {name}.")
+                    all_fetched.extend(parsed)
+                except Exception as e:
+                    log_event("WARN", "FETCHER", f"Failover active: source {name} encountered {e}")
+                    errors.append(f"{name}: {e}")
 
-                self.root.after(0, self._on_fetch_complete, True, len(new_proxies))
-            except Exception as e:
-                log_event("ERROR", "FETCHER", f"Failed to fetch proxies: {e}")
-                self.root.after(0, self._on_fetch_complete, False, str(e))
+            # Canonical deduplication
+            seen = set()
+            deduped = []
+            for p in all_fetched:
+                key = p.get('id') or f"{p['server'].lower()}:{p['port']}:{p['secret']}"
+                if key not in seen:
+                    seen.add(key)
+                    deduped.append(p)
+
+            if deduped:
+                self.db.upsert_proxies(deduped)
+                now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.db.set_setting("last_update_timestamp", now_str)
+                log_event("INFO", "FETCHER", f"Total unified deduplicated proxies: {len(deduped)}.")
+                self.root.after(0, self._on_fetch_complete, True, len(deduped))
+            elif errors:
+                log_event("ERROR", "FETCHER", f"All sources failed: {errors}")
+                self.root.after(0, self._on_fetch_complete, False, " | ".join(errors))
+            else:
+                self.root.after(0, self._on_fetch_complete, True, 0)
 
         threading.Thread(target=task, daemon=True).start()
 

@@ -12,7 +12,10 @@ import urllib.request
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 
-SOURCE_URL = "https://raw.githubusercontent.com/SoliSpirit/mtproto/master/all_proxies.txt"
+SOURCES = [
+    ("SoliSpirit MTProto", "https://raw.githubusercontent.com/SoliSpirit/mtproto/master/all_proxies.txt"),
+    ("mtproto-auto-proxies", "https://raw.githubusercontent.com/moshraheem-sudo/mtproto-auto-proxies/main/proxies.txt")
+]
 
 def test_proxy(server, port, timeout=3.0):
     start = time.time()
@@ -28,37 +31,41 @@ def test_proxy(server, port, timeout=3.0):
 
 def main():
     print("=" * 60)
-    print(" MTProxy Desk - تحديث فوري مباشر من GitHub")
-    print(f" الرابط: {SOURCE_URL}")
+    print(" MTProxy Desk - تحديث فوري مباشر من مصادر GitHub المزدوجة")
+    for name, url in SOURCES:
+        print(f" - {name}: {url}")
     print("=" * 60)
-    print("\n[1/3] جاري تنزيل أحدث قائمة بروكسيات من المستودع...")
+    print("\n[1/3] جاري تنزيل أحدث قوائم البروكسيات مع دعم Failover...")
 
-    try:
-        req = urllib.request.Request(SOURCE_URL, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            text = resp.read().decode('utf-8', errors='ignore')
-    except Exception as e:
-        print(f"❌ فشل الاتصال بالمصدر: {e}")
-        return
-
-    lines = [l.strip() for l in text.splitlines() if l.strip() and not l.startswith('#')]
-    print(f"✅ تم استلام {len(lines)} بروكسي من GitHub.")
+    all_lines = []
+    for name, url in SOURCES:
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                text = resp.read().decode('utf-8', errors='ignore')
+            lines = [l.strip() for l in text.splitlines() if l.strip() and not l.startswith('#')]
+            print(f"✅ تم استلام {len(lines)} بروكسي من {name}.")
+            all_lines.extend(lines)
+        except Exception as e:
+            print(f"⚠️ تعذر جلب {name}: {e} (الاعتماد على المصدر الآخر)")
 
     proxies = []
     seen = set()
-    for line in lines:
+    for line in all_lines:
         try:
             parsed = urllib.parse.urlparse(line if not line.startswith('t.me/') else 'https://' + line)
             qs = urllib.parse.parse_qs(parsed.query)
-            srv = qs['server'][0].strip().rstrip('.')
+            srv = qs['server'][0].strip().rstrip('.').lower()
             port = int(qs['port'][0].strip())
             sec = qs['secret'][0].strip()
-            key = f"{srv}:{port}"
+            key = f"{srv}:{port}:{sec}"
             if key not in seen:
                 seen.add(key)
                 proxies.append({'server': srv, 'port': port, 'secret': sec})
         except Exception:
             continue
+
+    print(f"📊 إجمالي البروكسيات الموحدة بعد إزالة التكرار: {len(proxies)}")
 
     print(f"[2/3] تم تنظيف العناوين وإزالة التكرارات: {len(proxies)} بروكسي فريد.")
     print("\n[3/3] فحص استجابة الخوادم السريعة (TCP Ping)...")
