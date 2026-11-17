@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 MTProxy Desk – Telegram Proxy Manager (Python Edition)
-الإصدار: 1.0.1
+الإصدار: 1.0.2
 تطبيق احترافي متكامل لإدارة وفحص وتشغيل بروكسيات Telegram باستخدام Python و Tkinter
 مع دعم التحديث الفوري المباشر من GitHub وقاعدة بيانات SQLite مدمجة.
 """
@@ -265,7 +265,7 @@ def launch_telegram(server: str, port: int, secret: str) -> dict:
 class MTProxyDeskApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("MTProxy Desk v1.0.1 – Dev: Mohammed Shaheed Al-Aajeebi")
+        self.root.title("MTProxy Desk v1.0.2 – Dev: Mohammed Shaheed Al-Aajeebi")
         self.root.geometry("840x580")
         self.root.minsize(700, 460)
         self.root.configure(bg="#0b1120")
@@ -521,7 +521,7 @@ class MTProxyDeskApp:
                     log_event("INFO", "FETCHER", f"Fetching from {name}: {url}")
                     req = urllib.request.Request(
                         url,
-                        headers={'User-Agent': 'MTProxyDesk/1.0.1 (Windows)'}
+                        headers={'User-Agent': 'MTProxyDesk/1.0.2 (Windows)'}
                     )
                     with urllib.request.urlopen(req, timeout=12) as response:
                         raw_text = response.read().decode('utf-8', errors='ignore')

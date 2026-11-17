@@ -4,7 +4,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
 
-pub const CURRENT_VERSION: &str = "1.0.1";
+pub const CURRENT_VERSION: &str = "1.0.2";
 pub const GITHUB_REPO: &str = "moshraheem-sudo/MTProxy-Desk";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,7 +57,7 @@ fn get_update_dir() -> PathBuf {
 /// Checks GitHub Releases API for a newer version
 pub async fn check_for_updates() -> Result<UpdateCheckResult, String> {
     let client = reqwest::Client::builder()
-        .user_agent("MTProxyDesk/1.0.1 (Windows NT)")
+        .user_agent("MTProxyDesk/1.0.2 (Windows NT)")
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
@@ -184,7 +184,7 @@ pub async fn download_update_file(
     }
 
     let client = reqwest::Client::builder()
-        .user_agent("MTProxyDesk/1.0.1 (Windows NT)")
+        .user_agent("MTProxyDesk/1.0.2 (Windows NT)")
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 

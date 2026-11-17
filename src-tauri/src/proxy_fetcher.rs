@@ -19,7 +19,7 @@ impl ProxyFetcher {
     pub fn new(logger: DiagnosticsLogger) -> Self {
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(12))
-            .user_agent("MTProxyDesk/1.0.1 (Windows NT 10.0; Win64; x64)")
+            .user_agent("MTProxyDesk/1.0.2 (Windows NT 10.0; Win64; x64)")
             .build()
             .unwrap_or_default();
 

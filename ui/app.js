@@ -20,7 +20,7 @@ let appSettings = null;
 const i18n = {
   en: {
     appTitle: "MTProxy Desk",
-    appVersion: "v1.0.1",
+    appVersion: "v1.0.2",
     devTag: "Dev: Mohammed Shaheed Al-Aajeebi",
     langBtn: "العربية",
 
@@ -77,7 +77,7 @@ const i18n = {
 
   ar: {
     appTitle: "MTProxy Desk",
-    appVersion: "v1.0.1",
+    appVersion: "v1.0.2",
     devTag: "المطور: محمد شهيد الاعاجيبي",
     langBtn: "English",
 
@@ -1007,7 +1007,7 @@ async function handleUpdaterAction() {
   try {
     const downloadedPath = await invokeBackend('download_app_update', {
       downloadUrl: currentUpdateInfo.download_url,
-      fileName: currentUpdateInfo.file_name || "MTProxy_Desk_Setup_v1.0.1.exe"
+      fileName: currentUpdateInfo.file_name || "MTProxy_Desk_Setup_v1.0.2.exe"
     });
 
     currentUpdateInfo.is_downloaded = true;

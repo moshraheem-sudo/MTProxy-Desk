@@ -1,89 +1,75 @@
-# MTProxy Desk – Telegram Proxy Manager
+# MTProxy Desk ⚡ – مدير بروكسيات تليجرام لسطح المكتب
+### Telegram Proxy Manager (v1.0.2)
 
-**Version:** 1.0.1  
-**Developer:** Mohammed Shaheed Al-Aajeebi (محمد شهيد الاعاجيبي)  
-**Target Platform:** Windows 10 / Windows 11 (64-Bit)  
-**Core Engine:** Rust Stable + Tokio + Tauri 2  
-**Interface:** Ultra-Compact, Lightweight & High-Performance (English Default with Arabic toggle)  
-**Auto-Sync Interval:** Every 30 minutes (automatic background sync + manual instant update button)
-
----
-
-## 📌 About MTProxy Desk
-
-**MTProxy Desk** is a dedicated, production-grade Windows desktop application for managing, verifying, benchmarking, and directly launching verified Telegram MTProto proxies. Built with **Rust** as its high-performance network engine, Tokio for concurrent TCP testing, and SQLite for robust offline persistence.
-
-Designed by **Mohammed Shaheed Al-Aajeebi**, the application features an ultra-compact UI optimized to run smoothly and rapidly across all types of computers and laptops without memory or CPU overhead.
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/moshraheem-sudo/MTProxy-Desk/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20(64--bit)-0078d7.svg)](https://github.com/moshraheem-sudo/MTProxy-Desk)
+[![Rust](https://img.shields.io/badge/engine-Rust%20%2B%20Tokio-DEA584.svg)](https://www.rust-lang.org/)
+[![Developer](https://img.shields.io/badge/Developer-Mohammed%20Shaheed%20Al--Aajeebi-10b981.svg)](https://github.com/moshraheem-sudo)
 
 ---
 
-## 🚀 Key Features
+## 🇸🇦 الدليل التعريفي الشامل (باللغة العربية)
 
-1. **Auto-Sync Every 30 Minutes & Manual Instant Update:**
-   - Automatically polls the latest live proxy feeds from GitHub every 30 minutes.
-   - Includes a one-click manual update button to refresh proxies on demand.
-   - Fully offline-capable: caches verified proxies in a local SQLite database with zero downtime.
+تطبيق **MTProxy Desk** هو برنامج متطور واحترافي لبيئة Windows (64 بت) لإدارة وفحص وربط بروكسيات تليجرام **MTProto** الحية وفائقة السرعة بنقرة واحدة، تم تصميمه وبرمجته بواسطة **محمد شهيد الاعاجيبي (Mohammed Shaheed Al-Aajeebi)**.
 
-2. **Dual-Source Sync & Seamless Failover:**
-   - **Primary Source 1:** [SoliSpirit/mtproto](https://github.com/SoliSpirit/mtproto) raw feed.
-   - **Secondary Source 2:** [moshraheem-sudo/mtproto-auto-proxies](https://github.com/moshraheem-sudo/mtproto-auto-proxies) auto-scraped feed (updated every 2 hours).
-   - **Fault Tolerance:** Both sources are queried concurrently and independently. If one feed times out or is blocked, MTProxy Desk seamlessly continues with the other without crashing or displaying empty lists.
-   - **Strict Canonical Deduplication:** Merges proxies and deduplicates by unique `(server, port, secret)` tuple, unifying `tg://proxy` and `https://t.me/proxy` formats.
+### 🌟 أبرز مميزات الإصدار v1.0.2:
 
-3. **In-App GitHub Release Updater (v1.0.1):**
-   - Real-time version check directly with GitHub Releases.
-   - Only offers downloads when a newer version exists, preventing redundant downloads.
-   - Live Megabytes progress indicator (`MB downloaded / MB total`).
-   - Clean download management: removes previous temporary installer builds automatically.
-   - Dedicated **Install Update Now (تثبيت التحديث الآن)** button on completion with smooth Windows UAC elevation.
+1. **جلب متزامن مزدوج للمصادر (Dual-Source Sync):**
+   - **المصدر الأساسي 1:** مستودع [SoliSpirit/mtproto](https://github.com/SoliSpirit/mtproto).
+   - **المصدر الثانوي 2:** مستودع [mtproto-auto-proxies](https://github.com/moshraheem-sudo/mtproto-auto-proxies) التلقائي السحابي المحدث كل ساعتين.
+   - **تخطي الحظر في العراق والشرق الأوسط:** يتم سحب بروكسيات قناة تليجرام `https://t.me/s/ProxyMTProto` عبر سيرفرات GitHub السحابية، مما يضمن وصول أحدث البروكسيات للمستخدمين في العراق بدون أي حظر لمواقع تليجرام من مزودي الإنترنت المحليين.
+   - **جلب واقعي ومؤكد لأحدث 50+ سيرفر:** يتم استخراج ما يزيد عن 50 سيرفر واقعي باستمرار دون إهمال أي مفتاح.
 
-3. **Ultra-Compact & Fast Desktop Interface:**
-   - Small footprint window (840x580) tailored for any screen resolution.
-   - Quick Connect and Share actions directly accessible before the server column.
-   - Zero horizontal overflow.
-   - English by default with an instant Arabic language toggle.
+2. **منع التكرار الدقيق (Strict Deduplication):**
+   - دمج ومطابقة السيرفرات بناءً على ثلاثية `(السيرفر، المنفذ، المفتاح السري)` وتوحيد روابط `tg://proxy` و `https://t.me/proxy` لمنع أي تكرار في الجدول.
 
-4. **Right-Click Context Menu:**
-   - Right-click any server row to Connect in Telegram, Retest Ping, Bookmark as Favorite, Share, or view Full Details.
+3. **حذف السيرفرات المعطلة والمنتهية بضغطة زر (`🧹 Clean Dead`):**
+   - إمكانية تنظيف قاعدة البيانات المحلية SQLite من أي بروكسيات غير متصلة أو متوقفة عن العمل فوراً مع الحفاظ التام على السيرفرات المفضلة.
 
-5. **High-Performance Rust Validation Engine:**
-   - Tokio-powered concurrent TCP latency and DNS verification.
-   - Distinguishes TCP reachability from MTProto handshake with complete transparency.
-   - Live metrics: Total proxies, Reachable, Dead, and Best Ping in milliseconds.
+4. **معرفة مصدر كل منفذ وسيرفر (Origin Feed):**
+   - داخل نافذة تفاصيل السيرفر والمنفذ (`Port Info`)، يظهر المصدر الذي جُلب منه السيرفر بوضوح (سواء من الساحب التلقائي لقناة تليجرام أو من المستودع العالمي).
 
-6. **Instant 1-Click Launch in Telegram Desktop:**
-   - Generates secure `tg://proxy?server=...&port=...&secret=...` links.
-   - Seamlessly passes connections to Telegram Desktop with web fallback `https://t.me/proxy`.
+5. **نظام التحديث التلقائي البرمجي المدمج (In-App Updater):**
+   - فحص مباشر مع GitHub Releases للإصدارات الأحدث مع إظهار حجم التحديث الحقيقي بالميغابايت ونسبة التحميل.
+   - زر تثبيت وترقية فوري ينطلق بعد اكتمال التنزيل ويطلب أذونات المسؤول (UAC) لتثبيت النسخة الأحدث وحذف الملفات المؤقتة القديمة.
 
-7. **Integrated Share & QR Studio:**
-   - Generates high-contrast QR codes for instant mobile camera connection.
-   - Single-click copying for Server, Port, Secret, and Full Protocol Link.
-   - Export proxy configuration as `.txt`.
-
-8. **System Tray & Autostart Integration:**
-   - Minimizes to Windows System Tray on close to keep testing in the background.
-   - Optional automatic start on Windows boot.
+6. **واجهة خفيفة وفائقة السرعة:**
+   - تصميم مضغوط ومناسب لكافة الشاشات وأجهزة الحواسيب واللابتوبات الضعيفة والقوية دون أي استهلاك لموارد الذاكرة أو المعالج.
+   - ترتيب الأزرار بمرونة تامة (زر الربط بالتليجرام وزر الباركود قبل عمود اسم السيرفر لتسهيل الوصول).
+   - دعم كامل للغتين: الإنجليزية كلغة افتراضية مع زر فوري للتحويل للغة العربية.
+   - قائمة خيارات بالزر الأيمن للفأرة (Right-Click Context Menu) على أي سيرفر لتسهيل الربط السريع، إعادة الفحص، أو النسخ.
 
 ---
 
-## 📦 Distribution Packages
+## 📦 حزم التحميل والتثبيت المباشرة (Direct Downloads)
 
-| File | Type | Description |
+| الملف | النوع | الوصف |
 | :--- | :--- | :--- |
-| **[MTProxy_Desk_Setup_v1.0.1.exe](file:///c:/Users/gahzi/Desktop/mtproto/MTProxy_Desk_Setup_v1.0.1.exe)** | Windows Setup Installer | Official NSIS installer. Configures Start Menu shortcuts and all required runtime DLLs. |
-| **[MTProxy_Desk_Setup_v1.0.1.msi](file:///c:/Users/gahzi/Desktop/mtproto/MTProxy_Desk_Setup_v1.0.1.msi)** | Windows MSI Package | Enterprise MSI installer for standard Windows deployment. |
-| **[MTProxy_Desk_Portable_v1.0.1.zip](file:///c:/Users/gahzi/Desktop/mtproto/MTProxy_Desk_Portable_v1.0.1.zip)** | Portable ZIP Archive | Zero-install standalone archive with `mtproxy-desk.exe` and `WebView2Loader.dll`. |
-| **[run_desktop.bat](file:///c:/Users/gahzi/Desktop/mtproto/run_desktop.bat)** | 1-Click Launcher | Automatically verifies libraries and runs `mtproxy-desk.exe`. |
-| **[mtproxy_desk.py](file:///c:/Users/gahzi/Desktop/mtproto/mtproxy_desk.py)** | Python Standalone Edition | Full GUI application in Python with Tkinter, SQLite, and 30-min auto-update. |
-| **[run_python.bat](file:///c:/Users/gahzi/Desktop/mtproto/run_python.bat)** | Python Launcher | Runs the Python edition using local Python 3.12. |
-| **[update_proxies.py](file:///c:/Users/gahzi/Desktop/mtproto/update_proxies.py)** | CLI Direct Updater | Terminal updater that tests all proxies from raw GitHub URL. |
+| **[MTProxy_Desk_Setup_v1.0.2.exe](file:///c:/Users/gahzi/Desktop/mtproto/MTProxy_Desk_Setup_v1.0.2.exe)** | برنامج تثبيت رسمي (NSIS) | يقوم بتثبيت البرنامج تلقائياً وإضافته لقائمة ابدأ وسطح المكتب مع كافة مكتبات التشغيل. |
+| **[MTProxy_Desk_Setup_v1.0.2.msi](file:///c:/Users/gahzi/Desktop/mtproto/MTProxy_Desk_Setup_v1.0.2.msi)** | حزمة ويندوز القياسية (MSI) | مثبت Windows Installer قياسي مناسب للشركات والنشر العام. |
+| **[MTProxy_Desk_Portable_v1.0.2.zip](file:///c:/Users/gahzi/Desktop/mtproto/MTProxy_Desk_Portable_v1.0.2.zip)** | نسخة محمولة جاهزة (Portable) | تعمل مباشرة بدون تثبيت، وتتضمن ملفات `mtproxy-desk.exe` و `WebView2Loader.dll` المدمج. |
+| **[run_desktop.bat](file:///c:/Users/gahzi/Desktop/mtproto/run_desktop.bat)** | ملف تشغيل سريع فوري | يفحص البيئة والمكتبات تلقائياً ويشغل البرنامج بسلاسة. |
 
 ---
 
-## 👨‍💻 Developer & Credits
+## 🇬🇧 English Documentation
 
-- **Developer:** Mohammed Shaheed Al-Aajeebi (محمد شهيد الاعاجيبي)
-- **Application Version:** 1.0.1
-- **GitHub Repository:** [moshraheem-sudo/MTProxy-Desk](https://github.com/moshraheem-sudo/MTProxy-Desk)
-- **Primary Proxy Source 1:** [SoliSpirit/mtproto](https://github.com/SoliSpirit/mtproto)
-- **Secondary Proxy Source 2:** [moshraheem-sudo/mtproto-auto-proxies](https://github.com/moshraheem-sudo/mtproto-auto-proxies)
+**MTProxy Desk** is a high-performance, production-grade Windows desktop application built with **Rust**, **Tokio**, and **Tauri 2** for discovering, testing, benchmarking, and directly launching verified Telegram MTProto proxies.
+
+### Key Capabilities:
+- **Dual-Source High Availability:** Queries both `SoliSpirit/mtproto` and `moshraheem-sudo/mtproto-auto-proxies` simultaneously.
+- **Bypasses Censorship via Cloud Runners:** GitHub Actions bridges Telegram web endpoints (`https://t.me/s/ProxyMTProto`) into raw feeds accessible without blocking in Iraq and restricted regions.
+- **Strict Canonical Deduplication:** Guarantees zero duplicate entries across multiple feed formats.
+- **1-Click Connect & Share Studio:** Direct link generation (`tg://proxy?...`) with QR Code generator for mobile phones.
+- **Local SQLite Persistence:** Works offline with sub-second launch times and low RAM footprint (<40MB).
+- **In-App GitHub Release Updater:** Automatically detects newer versions on GitHub, downloads installers with live MB progress, and self-installs cleanly.
+
+---
+
+## 👨‍💻 المطور / Developer & Credits
+
+- **المطور / Developer:** محمد شهيد الاعاجيبي (Mohammed Shaheed Al-Aajeebi)
+- **الإصدار الحالي / Version:** 1.0.2
+- **مستودع المشروع / GitHub Repo:** [moshraheem-sudo/MTProxy-Desk](https://github.com/moshraheem-sudo/MTProxy-Desk)
+- **مستودع البروكسيات التلقائي / Auto Scraper Feed:** [moshraheem-sudo/mtproto-auto-proxies](https://github.com/moshraheem-sudo/mtproto-auto-proxies)
+- **قناة التليجرام المصدر / Telegram Source Channel:** [ProxyMTProto](https://t.me/s/ProxyMTProto)

@@ -2,7 +2,7 @@
 chcp 65001 >nul
 cd /d "%~dp0"
 echo ====================================================
-echo  MTProxy Desk v1.0.1 – Dev: Mohammed Shaheed Al-Aajeebi
+echo  MTProxy Desk v1.0.2 – Dev: Mohammed Shaheed Al-Aajeebi
 echo ====================================================
 echo جاري فحص البيئة والمكتبات...
 
