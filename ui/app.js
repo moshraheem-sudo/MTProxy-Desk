@@ -838,6 +838,85 @@ async function handleDeleteSource(url) {
   }
 }
 
+let currentUpdateInfo = null;
+
+// ==========================================
+// SOFTWARE UPDATER (GITHUB RELEASES)
+// ==========================================
+async function checkAppUpdates(interactive = false) {
+  try {
+    if (interactive) {
+      showToast("Checking GitHub for updates...");
+    }
+    const res = await invokeBackend('check_app_updates');
+    if (!res) return;
+    currentUpdateInfo = res;
+
+    const tagElem = document.getElementById('updater-latest-tag');
+    const sizeElem = document.getElementById('updater-file-size');
+    const notesElem = document.getElementById('updater-notes');
+    const startBtn = document.getElementById('btn-start-install-update');
+
+    tagElem.textContent = res.latest_version ? `v${res.latest_version}` : 'v1.0.0';
+    sizeElem.textContent = res.file_size_mb > 0 ? `${res.file_size_mb} MB` : 'Included';
+    notesElem.textContent = res.release_notes || "Continuous improvements, latency optimizations, and MTProto feed updates.";
+
+    startBtn.disabled = false;
+    document.getElementById('updater-progress-box').classList.add('hidden');
+
+    if (res.has_update) {
+      startBtn.innerHTML = `<span>🚀</span> Download & Install Update (${res.file_size_mb} MB)`;
+      openUpdaterModal();
+    } else {
+      startBtn.innerHTML = `<span>✔️</span> Running Latest Version (v${res.current_version})`;
+      if (interactive) {
+        openUpdaterModal();
+      }
+    }
+  } catch (err) {
+    console.error("Check update error:", err);
+    if (interactive) {
+      showToast("Error checking updates: " + err);
+    }
+  }
+}
+
+function openUpdaterModal() {
+  document.getElementById('modal-updater').classList.remove('hidden');
+}
+
+function closeUpdaterModal() {
+  document.getElementById('modal-updater').classList.add('hidden');
+}
+
+async function startInstallUpdate() {
+  if (!currentUpdateInfo || !currentUpdateInfo.download_url) {
+    window.open("https://github.com/moshraheem-sudo/MTProxy-Desk/releases", "_blank");
+    return;
+  }
+
+  const startBtn = document.getElementById('btn-start-install-update');
+  startBtn.disabled = true;
+  startBtn.innerHTML = `<span>⏳</span> Downloading Update...`;
+
+  const progBox = document.getElementById('updater-progress-box');
+  progBox.classList.remove('hidden');
+  document.getElementById('updater-progress-status').textContent = "Downloading installer from GitHub...";
+  document.getElementById('updater-progress-mb').textContent = `0.0 MB / ${currentUpdateInfo.file_size_mb} MB (0%)`;
+  document.getElementById('updater-progress-bar').style.width = '0%';
+
+  try {
+    await invokeBackend('start_app_update', {
+      downloadUrl: currentUpdateInfo.download_url,
+      fileName: currentUpdateInfo.file_name || "MTProxy_Desk_Setup.exe"
+    });
+  } catch (err) {
+    showToast("Update failed: " + err);
+    startBtn.disabled = false;
+    startBtn.innerHTML = `<span>🚀</span> Retry Download`;
+  }
+}
+
 // Setup
 document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -917,6 +996,41 @@ document.addEventListener('DOMContentLoaded', async () => {
       showToast("Failed to add feed");
     }
   });
+
+  // Software Updater Setup
+  document.getElementById('btn-sidebar-check-release').addEventListener('click', () => checkAppUpdates(true));
+  document.getElementById('btn-settings-check-update').addEventListener('click', () => checkAppUpdates(true));
+  document.getElementById('btn-close-updater').addEventListener('click', closeUpdaterModal);
+  document.getElementById('modal-updater').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-updater') closeUpdaterModal();
+  });
+  document.getElementById('btn-start-install-update').addEventListener('click', startInstallUpdate);
+  document.getElementById('btn-open-github-releases').addEventListener('click', () => {
+    window.open("https://github.com/moshraheem-sudo/MTProxy-Desk/releases", "_blank");
+  });
+
+  // Listen to Tauri progress event
+  if (window.__TAURI__ && window.__TAURI__.event && window.__TAURI__.event.listen) {
+    window.__TAURI__.event.listen('app-update-progress', (event) => {
+      const p = event.payload;
+      if (!p) return;
+      const progBox = document.getElementById('updater-progress-box');
+      progBox.classList.remove('hidden');
+      document.getElementById('updater-progress-mb').textContent = `${p.downloaded_mb.toFixed(2)} MB / ${p.total_mb.toFixed(2)} MB (${p.percentage.toFixed(1)}%)`;
+      document.getElementById('updater-progress-bar').style.width = `${p.percentage}%`;
+      if (p.status === 'completed') {
+        document.getElementById('updater-progress-status').textContent = "Download complete! Launching installer...";
+        showToast("Update downloaded! Launching installer...");
+      } else {
+        document.getElementById('updater-progress-status').textContent = "Downloading installer...";
+      }
+    });
+  }
+
+  // Check for updates silently in background on startup after 3 seconds
+  setTimeout(() => {
+    checkAppUpdates(false);
+  }, 3000);
 
   // Modal Close
   document.getElementById('btn-close-details').addEventListener('click', closeDetailsModal);

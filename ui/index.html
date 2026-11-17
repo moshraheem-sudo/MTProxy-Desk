@@ -72,7 +72,10 @@
           </div>
         </div>
         <button class="btn btn-primary btn-sm btn-block" id="btn-sidebar-update" title="Fetch latest proxies from GitHub immediately">
-          <span>🔄</span> Update Now
+          <span>🔄</span> Update Proxies
+        </button>
+        <button class="btn btn-outline btn-xs btn-block" id="btn-sidebar-check-release" title="Check GitHub repository for software updates">
+          <span>🚀</span> Check App Updates
         </button>
       </div>
     </aside>
@@ -322,7 +325,17 @@
             </div>
 
             <div class="settings-box">
-              <h4>Validation & Telegram Paths</h4>
+              <h4>Software Updates (GitHub Releases)</h4>
+
+              <div class="setting-item">
+                <div class="item-text">
+                  <label>In-App Auto-Update</label>
+                  <span>Check GitHub releases & install automatically</span>
+                </div>
+                <button class="btn btn-accent btn-sm" id="btn-settings-check-update">
+                  🚀 Check for Updates
+                </button>
+              </div>
 
               <div class="setting-item">
                 <div class="item-text">
@@ -342,14 +355,6 @@
 
               <div class="setting-item">
                 <div class="item-text">
-                  <label>Connection Timeout (Secs)</label>
-                  <span>Handshake wait duration (default 4s)</span>
-                </div>
-                <input type="number" id="set-timeout" min="1" max="15" value="4" class="input-num">
-              </div>
-
-              <div class="setting-item">
-                <div class="item-text">
                   <label>Telegram Executable Path</label>
                   <span>Optional custom path to Telegram.exe</span>
                 </div>
@@ -363,6 +368,7 @@
                 <div class="dev-title">MTProxy Desk – Telegram Proxy Manager v1.0.0</div>
                 <div class="dev-author">Developed by: <strong>Mohammed Shaheed Al-Aajeebi (محمد شهيد الاعاجيبي)</strong></div>
                 <div class="dev-src">Project Repo: <a href="https://github.com/moshraheem-sudo/MTProxy-Desk" target="_blank">github.com/moshraheem-sudo/MTProxy-Desk</a></div>
+                <div class="dev-src">Releases: <a href="https://github.com/moshraheem-sudo/MTProxy-Desk/releases" target="_blank">github.com/moshraheem-sudo/MTProxy-Desk/releases</a></div>
                 <div class="dev-src">Primary Feed: <a href="https://raw.githubusercontent.com/SoliSpirit/mtproto/master/all_proxies.txt" target="_blank">SoliSpirit MTProto (GitHub Raw)</a></div>
               </div>
 
@@ -432,6 +438,59 @@
       </div>
       <div class="modal-body" id="modal-details-body">
         <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Software Updater Modal -->
+  <div class="modal-overlay hidden" id="modal-updater">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🚀 Software Update (GitHub Releases)</h3>
+        <button class="modal-close" id="btn-close-updater">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="updater-status-box">
+          <div class="update-ver-row">
+            <div>
+              <span class="detail-label">Current Version:</span>
+              <span class="badge-rust">v1.0.0</span>
+            </div>
+            <div>
+              <span class="detail-label">Latest Version:</span>
+              <span class="badge-fast" id="updater-latest-tag">Checking...</span>
+            </div>
+            <div>
+              <span class="detail-label">File Size:</span>
+              <span class="badge-ping ping-fast" id="updater-file-size">-- MB</span>
+            </div>
+          </div>
+
+          <div class="update-notes-box">
+            <span class="detail-label">Release Notes:</span>
+            <div class="update-notes-text" id="updater-notes">Fetching release notes from GitHub...</div>
+          </div>
+
+          <!-- Live Download Progress Bar (Megabytes) -->
+          <div class="progress-container hidden" id="updater-progress-box">
+            <div class="progress-labels">
+              <span id="updater-progress-status">Downloading update...</span>
+              <span id="updater-progress-mb">0.0 MB / 0.0 MB (0%)</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="updater-progress-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="updater-actions-strip">
+            <button class="btn btn-success btn-block" id="btn-start-install-update">
+              <span>🚀</span> Download & Install Update Now
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-open-github-releases">
+              <span>🌐</span> Open GitHub Releases
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

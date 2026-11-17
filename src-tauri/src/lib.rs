@@ -1,4 +1,5 @@
 pub mod auto_updater;
+pub mod app_updater;
 pub mod database;
 pub mod diagnostics;
 pub mod proxy_fetcher;
@@ -208,6 +209,20 @@ fn remove_source(url: String, state: State<'_, AppState>) -> Result<(), String> 
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn check_app_updates() -> Result<app_updater::UpdateCheckResult, String> {
+    app_updater::check_for_updates().await
+}
+
+#[tauri::command]
+async fn start_app_update(
+    app: tauri::AppHandle,
+    download_url: String,
+    file_name: String,
+) -> Result<String, String> {
+    app_updater::download_and_install_update(app, download_url, file_name).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -302,6 +317,8 @@ pub fn run() {
             get_sources,
             add_source,
             remove_source,
+            check_app_updates,
+            start_app_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MTProxy Desk application");
