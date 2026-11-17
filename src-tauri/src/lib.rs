@@ -100,6 +100,21 @@ fn delete_proxy(id: String, state: State<'_, AppState>) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn clear_dead_proxies(state: State<'_, AppState>) -> Result<usize, String> {
+    let count = state
+        .manager
+        .db
+        .delete_dead_proxies()
+        .map_err(|e| e.to_string())?;
+    state.manager.logger.log(
+        "INFO",
+        "DATABASE",
+        &format!("Cleaned {} dead/unreachable proxies from local storage", count),
+    );
+    Ok(count)
+}
+
+#[tauri::command]
 fn get_stats(state: State<'_, AppState>) -> Result<ManagerStats, String> {
     Ok(state.manager.get_stats())
 }
@@ -317,6 +332,7 @@ pub fn run() {
             connect_fastest_telegram,
             toggle_favorite,
             delete_proxy,
+            clear_dead_proxies,
             get_stats,
             get_proxy_share_info,
             generate_qr,

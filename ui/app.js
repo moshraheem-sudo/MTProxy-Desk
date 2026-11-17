@@ -449,6 +449,13 @@ function openDetailsModal(proxyId, e) {
   const tgLink = `tg://proxy?server=${encodeURIComponent(p.server)}&port=${p.port}&secret=${encodeURIComponent(p.secret)}`;
   const httpLink = `https://t.me/proxy?server=${encodeURIComponent(p.server)}&port=${p.port}&secret=${encodeURIComponent(p.secret)}`;
 
+  let sourceBadge = "🌐 SoliSpirit/mtproto (GitHub Raw)";
+  if (p.source_url && p.source_url.includes("mtproto-auto-proxies")) {
+    sourceBadge = "⚡ mtproto-auto-proxies (Telegram /s/ Channel Feed)";
+  } else if (p.source_url && !p.source_url.includes("SoliSpirit")) {
+    sourceBadge = `📡 Custom Feed: ${p.source_url}`;
+  }
+
   body.innerHTML = `
     <div class="detail-row">
       <span class="detail-label">Server Host / IP:</span>
@@ -486,6 +493,14 @@ function openDetailsModal(proxyId, e) {
         <div class="detail-value-box">
           <span style="font-size: 11px;">${p.status}</span>
         </div>
+      </div>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Origin Feed / المصدر المستلم منه:</span>
+      <div class="detail-value-box" style="background: rgba(30, 41, 59, 0.85); border-color: rgba(56, 189, 248, 0.4);">
+        <span style="color: #38bdf8; font-weight: 600; font-size: 11px;">${sourceBadge}</span>
+        <button class="btn btn-secondary btn-xs" onclick="copyToClipboard('${p.source_url || 'https://raw.githubusercontent.com/moshraheem-sudo/mtproto-auto-proxies/main/proxies.txt'}')">📋 Copy Feed</button>
       </div>
     </div>
 
@@ -828,6 +843,23 @@ async function handleDeleteProxy(proxyId, e) {
   }
 }
 
+async function handlePurgeDeadProxies() {
+  try {
+    const deadCount = allProxies.filter(p => (p.status === 'Unreachable' || p.status === 'Timeout' || p.status === 'DnsFailed') && !p.is_favorite).length;
+    if (deadCount === 0) {
+      showToast("No dead proxies to clean.");
+      return;
+    }
+    const count = await invokeBackend('clear_dead_proxies');
+    allProxies = await invokeBackend('get_proxies');
+    renderProxiesTable();
+    await refreshStats();
+    showToast(`Successfully removed ${count} dead proxies from local storage.`);
+  } catch (e) {
+    showToast("Error clearing dead proxies: " + e);
+  }
+}
+
 async function handleDeleteSource(url) {
   try {
     await invokeBackend('remove_source', { url });
@@ -1013,6 +1045,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-sidebar-update').addEventListener('click', handleFetchProxies);
   document.getElementById('btn-validate-all').addEventListener('click', handleValidateAll);
   document.getElementById('btn-connect-fastest').addEventListener('click', handleConnectFastest);
+  document.getElementById('btn-purge-dead').addEventListener('click', handlePurgeDeadProxies);
 
   document.getElementById('input-search').addEventListener('input', (e) => {
     searchQuery = e.target.value;

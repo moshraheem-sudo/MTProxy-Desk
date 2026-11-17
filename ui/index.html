@@ -156,7 +156,10 @@
               <button class="chip" data-filter="unreachable" id="chip-unreachable">🔴 Dead</button>
             </div>
 
-            <div class="sort-wrap">
+            <div class="sort-wrap" style="display: flex; gap: 6px; align-items: center;">
+              <button class="btn btn-danger btn-xs" id="btn-purge-dead" title="Delete all dead and unreachable proxies from local database" style="padding: 3px 8px; font-size: 11px; white-space: nowrap;">
+                🧹 Clean Dead
+              </button>
               <select id="select-sort" class="select-sm">
                 <option value="ping">Fastest (Ping)</option>
                 <option value="port">Port</option>

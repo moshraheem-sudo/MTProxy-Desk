@@ -195,6 +195,15 @@ impl Database {
         Ok(())
     }
 
+    pub fn delete_dead_proxies(&self) -> Result<usize> {
+        let conn = self.get_conn()?;
+        let count = conn.execute(
+            "DELETE FROM proxies WHERE status IN ('Unreachable', 'Timeout', 'DnsFailed') AND is_favorite = 0",
+            [],
+        )?;
+        Ok(count)
+    }
+
     pub fn clear_all_proxies(&self) -> Result<()> {
         let conn = self.get_conn()?;
         conn.execute("DELETE FROM proxies", [])?;
