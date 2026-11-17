@@ -262,13 +262,36 @@ pub fn execute_installer(installer_path: String) -> Result<String, String> {
         return Err(format!("Installer file not found at: {}", installer_path));
     }
 
-    // Use open::that_detached to trigger Windows ShellExecuteEx with UAC elevation
-    open::that_detached(path)
-        .map_err(|e| format!("Failed to launch installer ({}): {}", installer_path, e))?;
+    #[cfg(target_os = "windows")]
+    {
+        // 1. Primary: Try Windows ShellExecute via open crate
+        let open_res = open::that_detached(path);
+        if let Err(e) = open_res {
+            // 2. Fallback: PowerShell Start-Process with -Verb RunAs (triggers UAC)
+            let ps_cmd = format!(
+                "Start-Process -FilePath '{}' -Verb RunAs",
+                installer_path.replace("'", "''")
+            );
+            let ps_res = std::process::Command::new("powershell")
+                .args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &ps_cmd])
+                .spawn();
+            if let Err(pe) = ps_res {
+                // 3. Fallback: cmd /c start "" "<installer_path>"
+                let _ = std::process::Command::new("cmd")
+                    .args(["/c", "start", "", &installer_path])
+                    .spawn()
+                    .map_err(|ce| format!("Launch failed (Open: {}, PS: {}, CMD: {})", e, pe, ce))?;
+            }
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        open::that_detached(path).map_err(|e| e.to_string())?;
+    }
 
-    // Exit application cleanly after 1 second so installer can replace files without locks
+    // Exit application cleanly after 1200ms so installer can proceed
     std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(1000));
+        std::thread::sleep(std::time::Duration::from_millis(1200));
         std::process::exit(0);
     });
 

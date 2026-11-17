@@ -497,8 +497,8 @@ function openDetailsModal(proxyId, e) {
       </div>
     </div>
 
-    <div style="margin-top: 10px; display: flex; gap: 8px;">
-      <button class="btn btn-success btn-block" onclick="handleLaunchTelegram('${p.id}'); closeDetailsModal();">
+    <div class="modal-actions-row">
+      <button class="btn btn-success" onclick="handleLaunchTelegram('${p.id}'); closeDetailsModal();">
         <span>✈️</span> Connect in Telegram Desktop
       </button>
       <button class="btn btn-primary" onclick="handleOpenShare('${p.id}'); closeDetailsModal();">
@@ -1102,6 +1102,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('updater-progress-bar').style.width = `${p.percentage}%`;
       if (p.status === 'completed') {
         document.getElementById('updater-progress-status').textContent = "✅ Download complete! Click below to install.";
+        const startBtn = document.getElementById('btn-start-install-update');
+        if (startBtn && updateActionState !== 'installing') {
+          startBtn.disabled = false;
+          startBtn.className = "btn btn-success btn-block";
+          startBtn.innerHTML = `<span>⚡</span> Install Update Now (تثبيت التحديث الآن)`;
+          updateActionState = 'ready_to_install';
+        }
       } else {
         document.getElementById('updater-progress-status').textContent = `Downloading update... ${p.percentage.toFixed(0)}%`;
       }

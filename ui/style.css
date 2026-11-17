@@ -965,6 +965,23 @@ body {
   color: #e2e8f0;
 }
 
+.modal-actions-row {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.modal-actions-row .btn {
+  width: 100%;
+  justify-content: center;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
 /* =========================================
    FASTEST VIEW
    ========================================= */
