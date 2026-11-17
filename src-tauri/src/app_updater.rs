@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::Write;
+use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
 
-pub const CURRENT_VERSION: &str = "1.0.0";
+pub const CURRENT_VERSION: &str = "1.0.1";
 pub const GITHUB_REPO: &str = "moshraheem-sudo/MTProxy-Desk";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,6 +19,8 @@ pub struct UpdateCheckResult {
     pub file_size_bytes: u64,
     pub file_size_mb: f64,
     pub release_html_url: String,
+    pub is_downloaded: bool,
+    pub local_installer_path: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,10 +50,14 @@ struct GitHubAsset {
     browser_download_url: String,
 }
 
+fn get_update_dir() -> PathBuf {
+    std::env::temp_dir().join("mtproxy_desk_updates")
+}
+
 /// Checks GitHub Releases API for a newer version
 pub async fn check_for_updates() -> Result<UpdateCheckResult, String> {
     let client = reqwest::Client::builder()
-        .user_agent("MTProxyDesk/1.0.0 (Windows NT)")
+        .user_agent("MTProxyDesk/1.0.1 (Windows NT)")
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
@@ -72,9 +79,9 @@ pub async fn check_for_updates() -> Result<UpdateCheckResult, String> {
             has_update: false,
             current_version: CURRENT_VERSION.to_string(),
             latest_version: CURRENT_VERSION.to_string(),
-            release_name: "No releases published yet".to_string(),
+            release_name: "Up to date".to_string(),
             release_notes: format!(
-                "You are running v{}. Releases will appear at https://github.com/{}/releases",
+                "You are running the latest v{}. Releases are tracked at https://github.com/{}/releases",
                 CURRENT_VERSION, GITHUB_REPO
             ),
             download_url: String::new(),
@@ -82,6 +89,8 @@ pub async fn check_for_updates() -> Result<UpdateCheckResult, String> {
             file_size_bytes: 0,
             file_size_mb: 0.0,
             release_html_url: format!("https://github.com/{}/releases", GITHUB_REPO),
+            is_downloaded: false,
+            local_installer_path: String::new(),
         });
     }
 
@@ -97,7 +106,25 @@ pub async fn check_for_updates() -> Result<UpdateCheckResult, String> {
     let latest_tag = release.tag_name.trim_start_matches('v').trim();
     let is_newer = is_version_newer(CURRENT_VERSION, latest_tag);
 
-    // Look for installer asset (.exe preferred, then .msi)
+    // If no newer version exists, do NOT propose downloading or show asset sizes
+    if !is_newer {
+        return Ok(UpdateCheckResult {
+            has_update: false,
+            current_version: CURRENT_VERSION.to_string(),
+            latest_version: latest_tag.to_string(),
+            release_name: release.name.unwrap_or_else(|| release.tag_name.clone()),
+            release_notes: release.body.unwrap_or_default(),
+            download_url: String::new(),
+            file_name: String::new(),
+            file_size_bytes: 0,
+            file_size_mb: 0.0,
+            release_html_url: release.html_url,
+            is_downloaded: false,
+            local_installer_path: String::new(),
+        });
+    }
+
+    // Only if there IS a newer version, find installer asset (.exe preferred, then .msi)
     let asset = release
         .assets
         .iter()
@@ -115,16 +142,23 @@ pub async fn check_for_updates() -> Result<UpdateCheckResult, String> {
                 (mb * 100.0).round() / 100.0,
             )
         }
-        None => (
-            String::new(),
-            String::new(),
-            0,
-            0.0,
-        ),
+        None => (String::new(), String::new(), 0, 0.0),
     };
 
+    // Check if installer is already downloaded locally
+    let update_dir = get_update_dir();
+    let local_path = if !file_name.is_empty() {
+        update_dir.join(&file_name)
+    } else {
+        PathBuf::new()
+    };
+    let is_downloaded = local_path.exists()
+        && fs::metadata(&local_path)
+            .map(|m| m.len() == file_size_bytes && file_size_bytes > 0)
+            .unwrap_or(false);
+
     Ok(UpdateCheckResult {
-        has_update: is_newer,
+        has_update: true,
         current_version: CURRENT_VERSION.to_string(),
         latest_version: latest_tag.to_string(),
         release_name: release.name.unwrap_or_else(|| release.tag_name.clone()),
@@ -134,12 +168,13 @@ pub async fn check_for_updates() -> Result<UpdateCheckResult, String> {
         file_size_bytes,
         file_size_mb,
         release_html_url: release.html_url,
+        is_downloaded,
+        local_installer_path: local_path.to_string_lossy().to_string(),
     })
 }
 
-/// Downloads the update installer with live progress in MB, cleans up previous versions,
-/// and executes the installer.
-pub async fn download_and_install_update(
+/// Downloads the update installer with live progress in MB, cleans up previous versions
+pub async fn download_update_file(
     app: AppHandle,
     download_url: String,
     file_name: String,
@@ -149,14 +184,13 @@ pub async fn download_and_install_update(
     }
 
     let client = reqwest::Client::builder()
-        .user_agent("MTProxyDesk/1.0.0 (Windows NT)")
+        .user_agent("MTProxyDesk/1.0.1 (Windows NT)")
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    // Create a dedicated directory for update downloads
-    let update_dir = std::env::temp_dir().join("mtproxy_desk_updates");
-    
-    // Always clean up previous update versions as requested
+    let update_dir = get_update_dir();
+
+    // Clean up previous update versions as requested ("ودائما حذف النسخ السابقه")
     if update_dir.exists() {
         let _ = fs::remove_dir_all(&update_dir);
     }
@@ -218,23 +252,30 @@ pub async fn download_and_install_update(
     };
     let _ = app.emit("app-update-progress", &finish_payload);
 
-    // Launch the downloaded installer cleanly and exit current application
-    let exe_str = installer_path.to_string_lossy().to_string();
+    Ok(installer_path.to_string_lossy().to_string())
+}
 
-    std::process::Command::new(&installer_path)
-        .spawn()
-        .map_err(|e| format!("Failed to launch installer ({}): {}", exe_str, e))?;
+/// Executes the installer with Windows Shell elevation (UAC prompt) and terminates the current app
+pub fn execute_installer(installer_path: String) -> Result<String, String> {
+    let path = std::path::Path::new(&installer_path);
+    if !path.exists() {
+        return Err(format!("Installer file not found at: {}", installer_path));
+    }
 
-    // Exit application cleanly so installer can replace files without locks
+    // Use open::that_detached to trigger Windows ShellExecuteEx with UAC elevation
+    open::that_detached(path)
+        .map_err(|e| format!("Failed to launch installer ({}): {}", installer_path, e))?;
+
+    // Exit application cleanly after 1 second so installer can replace files without locks
     std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(1500));
+        std::thread::sleep(std::time::Duration::from_millis(1000));
         std::process::exit(0);
     });
 
-    Ok(format!("Installer launched: {}", exe_str))
+    Ok("Installer launched successfully. Application is exiting.".to_string())
 }
 
-/// Simple semantic version comparator
+/// Semantic version comparator: returns true if candidate > current
 fn is_version_newer(current: &str, candidate: &str) -> bool {
     let parse_parts = |s: &str| -> Vec<u32> {
         s.split('.')

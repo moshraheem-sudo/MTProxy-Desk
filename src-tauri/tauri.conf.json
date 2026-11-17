@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "MTProxy Desk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "identifier": "com.mtproxydesk.client",
   "build": {
     "frontendDist": "../ui"
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "MTProxy Desk v1.0.0 – Dev: Mohammed Shaheed Al-Aajeebi",
+        "title": "MTProxy Desk v1.0.1 – Dev: Mohammed Shaheed Al-Aajeebi",
         "width": 840,
         "height": 580,
         "minWidth": 700,

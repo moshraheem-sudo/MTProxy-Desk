@@ -215,12 +215,26 @@ async fn check_app_updates() -> Result<app_updater::UpdateCheckResult, String> {
 }
 
 #[tauri::command]
+async fn download_app_update(
+    app: tauri::AppHandle,
+    download_url: String,
+    file_name: String,
+) -> Result<String, String> {
+    app_updater::download_update_file(app, download_url, file_name).await
+}
+
+#[tauri::command]
+fn execute_app_installer(installer_path: String) -> Result<String, String> {
+    app_updater::execute_installer(installer_path)
+}
+
+#[tauri::command]
 async fn start_app_update(
     app: tauri::AppHandle,
     download_url: String,
     file_name: String,
 ) -> Result<String, String> {
-    app_updater::download_and_install_update(app, download_url, file_name).await
+    app_updater::download_update_file(app, download_url, file_name).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -319,6 +333,8 @@ pub fn run() {
             remove_source,
             check_app_updates,
             start_app_update,
+            download_app_update,
+            execute_app_installer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MTProxy Desk application");

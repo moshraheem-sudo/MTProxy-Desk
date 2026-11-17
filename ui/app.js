@@ -20,7 +20,7 @@ let appSettings = null;
 const i18n = {
   en: {
     appTitle: "MTProxy Desk",
-    appVersion: "v1.0.0",
+    appVersion: "v1.0.1",
     devTag: "Dev: Mohammed Shaheed Al-Aajeebi",
     langBtn: "العربية",
 
@@ -77,7 +77,7 @@ const i18n = {
 
   ar: {
     appTitle: "MTProxy Desk",
-    appVersion: "v1.0.0",
+    appVersion: "v1.0.1",
     devTag: "المطور: محمد شهيد الاعاجيبي",
     langBtn: "English",
 
@@ -839,6 +839,7 @@ async function handleDeleteSource(url) {
 }
 
 let currentUpdateInfo = null;
+let updateActionState = 'idle'; // 'idle', 'downloading', 'ready_to_install', 'installing'
 
 // ==========================================
 // SOFTWARE UPDATER (GITHUB RELEASES)
@@ -852,26 +853,66 @@ async function checkAppUpdates(interactive = false) {
     if (!res) return;
     currentUpdateInfo = res;
 
-    const tagElem = document.getElementById('updater-latest-tag');
+    const currentTagElem = document.getElementById('updater-current-tag');
+    const latestTagElem = document.getElementById('updater-latest-tag');
+    const sizeCol = document.getElementById('updater-size-col');
     const sizeElem = document.getElementById('updater-file-size');
+    const statusBadge = document.getElementById('updater-status-badge');
     const notesElem = document.getElementById('updater-notes');
     const startBtn = document.getElementById('btn-start-install-update');
+    const progBox = document.getElementById('updater-progress-box');
 
-    tagElem.textContent = res.latest_version ? `v${res.latest_version}` : 'v1.0.0';
-    sizeElem.textContent = res.file_size_mb > 0 ? `${res.file_size_mb} MB` : 'Included';
-    notesElem.textContent = res.release_notes || "Continuous improvements, latency optimizations, and MTProto feed updates.";
+    currentTagElem.textContent = `v${res.current_version}`;
+    latestTagElem.textContent = `v${res.latest_version}`;
 
-    startBtn.disabled = false;
-    document.getElementById('updater-progress-box').classList.add('hidden');
+    if (!res.has_update) {
+      // 1. NO UPDATE NEEDED (Current == Latest)
+      statusBadge.textContent = "Up to Date";
+      statusBadge.className = "badge-fast";
+      sizeCol.style.display = "none";
+      notesElem.textContent = `You are currently running the latest version of MTProxy Desk (v${res.current_version}). All core engines and proxies are fully up to date.`;
+      progBox.classList.add('hidden');
 
-    if (res.has_update) {
-      startBtn.innerHTML = `<span>🚀</span> Download & Install Update (${res.file_size_mb} MB)`;
-      openUpdaterModal();
-    } else {
+      startBtn.disabled = true;
+      startBtn.className = "btn btn-outline btn-block";
       startBtn.innerHTML = `<span>✔️</span> Running Latest Version (v${res.current_version})`;
+      updateActionState = 'idle';
+
       if (interactive) {
         openUpdaterModal();
       }
+    } else {
+      // 2. NEW UPDATE AVAILABLE (Latest > Current)
+      sizeCol.style.display = "block";
+      sizeElem.textContent = res.file_size_mb > 0 ? `${res.file_size_mb} MB` : 'Installer';
+      notesElem.textContent = res.release_notes || "Performance optimizations, fresher proxies, and core fixes.";
+
+      if (res.is_downloaded) {
+        // Already downloaded on disk
+        statusBadge.textContent = "Ready to Install";
+        statusBadge.className = "badge-rust";
+        progBox.classList.remove('hidden');
+        document.getElementById('updater-progress-status').textContent = "✅ Download verified & ready to install!";
+        document.getElementById('updater-progress-mb').textContent = `${res.file_size_mb} MB / ${res.file_size_mb} MB (100%)`;
+        document.getElementById('updater-progress-bar').style.width = '100%';
+
+        startBtn.disabled = false;
+        startBtn.className = "btn btn-success btn-block";
+        startBtn.innerHTML = `<span>⚡</span> Install Update Now (تثبيت التحديث الآن)`;
+        updateActionState = 'ready_to_install';
+      } else {
+        // Needs download
+        statusBadge.textContent = "Update Available";
+        statusBadge.className = "badge-ping ping-fast";
+        progBox.classList.add('hidden');
+
+        startBtn.disabled = false;
+        startBtn.className = "btn btn-success btn-block";
+        startBtn.innerHTML = `<span>📥</span> Download Update (${res.file_size_mb} MB)`;
+        updateActionState = 'idle';
+      }
+
+      openUpdaterModal();
     }
   } catch (err) {
     console.error("Check update error:", err);
@@ -889,15 +930,41 @@ function closeUpdaterModal() {
   document.getElementById('modal-updater').classList.add('hidden');
 }
 
-async function startInstallUpdate() {
-  if (!currentUpdateInfo || !currentUpdateInfo.download_url) {
-    window.open("https://github.com/moshraheem-sudo/MTProxy-Desk/releases", "_blank");
+async function handleUpdaterAction() {
+  if (!currentUpdateInfo || !currentUpdateInfo.has_update) {
     return;
   }
 
   const startBtn = document.getElementById('btn-start-install-update');
+
+  // If already downloaded or in ready_to_install state, trigger installation!
+  if (updateActionState === 'ready_to_install' || currentUpdateInfo.is_downloaded) {
+    if (!currentUpdateInfo.local_installer_path) {
+      showToast("Installer path not found");
+      return;
+    }
+    updateActionState = 'installing';
+    startBtn.disabled = true;
+    startBtn.innerHTML = `<span>⏳</span> Launching installer & closing app...`;
+    showToast("Launching update installer...");
+
+    try {
+      await invokeBackend('execute_app_installer', {
+        installerPath: currentUpdateInfo.local_installer_path
+      });
+    } catch (err) {
+      showToast("Install error: " + err);
+      startBtn.disabled = false;
+      startBtn.innerHTML = `<span>⚡</span> Retry Install`;
+      updateActionState = 'ready_to_install';
+    }
+    return;
+  }
+
+  // Otherwise, start download!
+  updateActionState = 'downloading';
   startBtn.disabled = true;
-  startBtn.innerHTML = `<span>⏳</span> Downloading Update...`;
+  startBtn.innerHTML = `<span>⏳</span> Downloading Update (${currentUpdateInfo.file_size_mb} MB)...`;
 
   const progBox = document.getElementById('updater-progress-box');
   progBox.classList.remove('hidden');
@@ -906,14 +973,29 @@ async function startInstallUpdate() {
   document.getElementById('updater-progress-bar').style.width = '0%';
 
   try {
-    await invokeBackend('start_app_update', {
+    const downloadedPath = await invokeBackend('download_app_update', {
       downloadUrl: currentUpdateInfo.download_url,
-      fileName: currentUpdateInfo.file_name || "MTProxy_Desk_Setup.exe"
+      fileName: currentUpdateInfo.file_name || "MTProxy_Desk_Setup_v1.0.1.exe"
     });
-  } catch (err) {
-    showToast("Update failed: " + err);
+
+    currentUpdateInfo.is_downloaded = true;
+    currentUpdateInfo.local_installer_path = downloadedPath;
+    updateActionState = 'ready_to_install';
+
+    document.getElementById('updater-progress-status').textContent = "✅ Download complete! Click below to install.";
+    document.getElementById('updater-progress-mb').textContent = `${currentUpdateInfo.file_size_mb} MB / ${currentUpdateInfo.file_size_mb} MB (100%)`;
+    document.getElementById('updater-progress-bar').style.width = '100%';
+
+    // Transform button to Install button as requested: "المفروض عند انتهاء التنزيل يظهر زر تثبيت"
     startBtn.disabled = false;
-    startBtn.innerHTML = `<span>🚀</span> Retry Download`;
+    startBtn.className = "btn btn-success btn-block";
+    startBtn.innerHTML = `<span>⚡</span> Install Update Now (تثبيت التحديث الآن)`;
+    showToast("Download complete! Click 'Install Update Now' to proceed.");
+  } catch (err) {
+    showToast("Download failed: " + err);
+    startBtn.disabled = false;
+    startBtn.innerHTML = `<span>🔄</span> Retry Download`;
+    updateActionState = 'idle';
   }
 }
 
@@ -1004,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('modal-updater').addEventListener('click', (e) => {
     if (e.target.id === 'modal-updater') closeUpdaterModal();
   });
-  document.getElementById('btn-start-install-update').addEventListener('click', startInstallUpdate);
+  document.getElementById('btn-start-install-update').addEventListener('click', handleUpdaterAction);
   document.getElementById('btn-open-github-releases').addEventListener('click', () => {
     window.open("https://github.com/moshraheem-sudo/MTProxy-Desk/releases", "_blank");
   });
@@ -1019,10 +1101,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('updater-progress-mb').textContent = `${p.downloaded_mb.toFixed(2)} MB / ${p.total_mb.toFixed(2)} MB (${p.percentage.toFixed(1)}%)`;
       document.getElementById('updater-progress-bar').style.width = `${p.percentage}%`;
       if (p.status === 'completed') {
-        document.getElementById('updater-progress-status').textContent = "Download complete! Launching installer...";
-        showToast("Update downloaded! Launching installer...");
+        document.getElementById('updater-progress-status').textContent = "✅ Download complete! Click below to install.";
       } else {
-        document.getElementById('updater-progress-status').textContent = "Downloading installer...";
+        document.getElementById('updater-progress-status').textContent = `Downloading update... ${p.percentage.toFixed(0)}%`;
       }
     });
   }
